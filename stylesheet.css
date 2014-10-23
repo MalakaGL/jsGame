@@ -1,0 +1,25 @@
+canvas:first-child {
+    width: 500px;
+    height: 30px;
+    border-radius: 5px;
+    background-color: blue;
+}
+
+canvas {
+    display: inline;
+    width: 500px;
+    height: 500px;
+}
+
+h3 , h5{
+    text-align: center;
+}
+
+body {
+    background-color: blueviolet;
+}
+
+#canvas-container {
+    width: 100%;
+    text-align:center;
+}
