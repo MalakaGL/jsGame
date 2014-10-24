@@ -3,8 +3,8 @@ var rowColors = ["#FF1C0A", "#FFFD0A", "#00A308", "#0008DB", "#EB0093"];
 var paddleColor = "#FFFFFF";
 var ballColor = "#FFFFFF";
 var backColor = "#000000";
-var x = 25;
-var y = 250;
+var x;
+var y;
 var dx = 1.5;
 var dy = -4;
 var ctx;
@@ -18,11 +18,13 @@ var canvasMaxX = 0;
 var intervalId = 0;
 var bricks;
 var numRows = 5;
-var numCols = 5;
+var numCols = 10;
 var brickWidth;
 var brickHeight = 15;
 var PADDING = 1;
 var score = 0;
+var started = 0;
+var level = 1;
 
 // Handle keyboard controls
 var keysDown = {};
@@ -41,6 +43,27 @@ addEventListener("mousemove", function(evt) {
         paddleX = Math.min(WIDTH - paddleW, paddleX);
     }}, false);
 
+var start = function(){
+    started = 1;
+    clearInterval(intervalId);
+    intervalId = setInterval(draw, 10);
+}
+
+var stop = function(){
+    started = 0;
+    clearInterval(intervalId);
+    intervalId = setInterval(draw, 10);
+}
+
+var restart = function(){
+    started = 0;
+    score = 0;
+    clearInterval(intervalId);
+    ctx.clearRect(0,0,WIDTH,HEIGHT);
+    init();
+    initBricks();
+}
+
 var init = function() {
     var canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
@@ -52,6 +75,8 @@ var init = function() {
     brickWidth = (WIDTH/numCols) - 1;
     canvasMinX = canvas.offsetLeft;
     canvasMaxX = canvasMinX + WIDTH;
+    x = paddleX + paddleW / 2;
+    y = HEIGHT - paddleH - ballRadius;
     intervalId = setInterval(draw, 10);
 }
 
@@ -86,7 +111,7 @@ var initBricks = function() {
 
 var drawBricks = function() {
     for (i=0; i < numRows; i++) {
-        ctx.fillStyle = rowColors[i];
+        ctx.fillStyle = rowColors[i%5];
         for (j=0; j < numCols; j++) {
             if (bricks[i][j] == 1) {
                 rect((j * (brickWidth + PADDING)) + PADDING,
@@ -111,38 +136,27 @@ var draw = function() {
     rect(paddleX, HEIGHT-paddleH, paddleW, paddleH);
 
     drawBricks();
-    updateScore(1);
+    updateScore();
 
-    //want to learn about real collision detection? go read
-    // http://www.metanetsoftware.com/technique/tutorialA.html
     var rowHeight = brickHeight + PADDING;
     var colWidth = brickWidth + PADDING;
     var row = Math.floor(y/rowHeight);
     var col = Math.floor(x/colWidth);
 
     //reverse the ball and mark the brick as broken
-    if (y < numRows * rowHeight && row >= 0 && col >= 0 && bricks[row][col] == 1) {
+    if ( y < numRows * rowHeight && row >= 0 && col >= 0 && bricks[row][col] == 1) {
         dy = -dy;
         bricks[row][col] = 0;
-        switch(row){
-            case 0:
-                score += 50;
-                break;
-            case 1:
-                score += 40;
-                break;
-            case 2:
-                score += 30;
-                break;
-            case 3:
-                score += 20;
-                break;
-            case 4:
-                score += 10;
-                break;
-            default:
-                score += 0;
-                break;
+        score += ((numRows - row)*10);
+        if(finished()){
+            level += 1;
+            won();
+            clearInterval(intervalId);
+            started = 0;
+            dx += dx;
+            dy += dy;
+            if(numRows < 20)
+                numRows += 5;
         }
     }
 
@@ -157,15 +171,27 @@ var draw = function() {
             dx = 8 * ((x-(paddleX+paddleW/2))/paddleW);
             dy = -dy;
         }
-        else if (y + dy + ballRadius > HEIGHT)
+        else if (y + dy + ballRadius > HEIGHT) {
             clearInterval(intervalId);
+            started = 0;
+        }
     }
-
-    x += dx;
-    y += dy;
+    if(started){
+        x += dx;
+        y += dy;
+    }
 }
 
-var updateScore = function(level){
+var finished = function(){
+    for(var i = 0; i < numCols ; i++){
+        if(bricks[0][i] != 0){
+            return false;
+        }
+    }
+    return true;
+}
+
+var updateScore = function(){
     var canvas = document.getElementById("score");
     canvas.width=500;
     canvas.height=30;
@@ -175,7 +201,20 @@ var updateScore = function(level){
     ctx.font = "24px Helvetica";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
-    ctx.fillText("Score: " + score , 10, 0);
+    ctx.fillText("Score: " + score, 10, 0);
+    ctx.fillText("Level: " + level, 250, 0);
+}
+
+var won = function(){
+    var canvas = document.getElementById('canvas');
+    var context = canvas.getContext('2d');
+
+    // load image from data url
+    var img = new Image();
+    img.onload = function () {
+        ctx.drawImage(img, 0, 0, 500, 500);
+    }
+    img.src = 'download.jpg';
 }
 
 init();

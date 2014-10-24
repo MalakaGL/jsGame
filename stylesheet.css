@@ -11,7 +11,12 @@ canvas {
     height: 500px;
 }
 
-h3 , h5{
+h3 {
+    text-align: center;
+}
+
+h5 {
+    color: red;
     text-align: center;
 }
 
